@@ -1,11 +1,11 @@
-import { getAuthAdapter } from "@internal/core/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authAdapter } from "@/auth";
 import { login } from "./actions";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next = "/" } = await searchParams;
-  const users = await getAuthAdapter().listUsers();
+  const users = await authAdapter().listUsers();
   return (
     <Card className="mx-auto mt-16 max-w-md">
       <CardHeader>
