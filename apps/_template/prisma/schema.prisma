@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("MIGRATE_DATABASE_URL")
+}
+
+/// Append-only. Written only through @internal/core audit(); app_rw has SELECT + INSERT, no UPDATE/DELETE.
+model AuditLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ts        DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  actor     String
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  before    Json?
+  after     Json?
+  reason    String?
+  requestId String   @map("request_id")
+
+  @@index([entity, entityId, ts(sort: Desc)])
+  @@map("audit_log")
+}
