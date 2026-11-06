@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("analyst escalates a case with a reason and the audit row appears", async ({ page }) => {
+test("analyst escalates a case with a reason and category and the audit row appears", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/login/);
   await page.getByRole("button", { name: /Ana Analyst/ }).click();
@@ -13,8 +13,13 @@ test("analyst escalates a case with a reason and the audit row appears", async (
 
   const reason = `Smoke: name mismatch on ID document ${Date.now()}`;
   await page.getByLabel("Reason").fill(reason);
+  // Escalating without a category is blocked.
+  await page.getByRole("button", { name: "Escalate" }).click();
+  await expect(page.getByText("Choose an escalation category")).toBeVisible();
+  await page.getByLabel(/Escalation category/).selectOption("identity_mismatch");
   await page.getByRole("button", { name: "Escalate" }).click();
   await expect(page.getByTestId("case-status")).toHaveText("escalated");
+  await expect(page.getByTestId("escalation-category")).toHaveText("Identity mismatch");
   // Analysts cannot resolve escalations, so no transition buttons remain.
   await expect(page.getByRole("button", { name: "Approve" })).toHaveCount(0);
 
@@ -23,10 +28,10 @@ test("analyst escalates a case with a reason and the audit row appears", async (
   await expect(row).toHaveCount(1);
   await expect(row).toContainText("analyst");
   await expect(row).toContainText("in_review");
-  await expect(row).toContainText("escalated");
+  await expect(row).toContainText("escalated (Identity mismatch)");
 
   const res = await page.request.get(`/api/audit?caseId=${caseId}`);
   expect(res.status()).toBe(200);
   const [latest] = await res.json();
-  expect(latest).toMatchObject({ reason, before: { status: "in_review" }, after: { status: "escalated" } });
+  expect(latest).toMatchObject({ reason, before: { status: "in_review" }, after: { status: "escalated", escalationCategory: "identity_mismatch" } });
 });

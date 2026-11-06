@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { assignableUsers, getCase, isOverdue, listAudit } from "@/kyc/cases";
+import { ESCALATION_CATEGORY_LABELS, parseEscalationCategory } from "@/kyc/escalation";
 import { TRANSITION_LABELS, transitionsFor } from "@/kyc/machine";
 import { formatTs } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,11 @@ import { TransitionForm } from "./transition-form";
 
 export const dynamic = "force-dynamic";
 
-const statusOf = (v: unknown) => (v && typeof v === "object" && "status" in v ? String(v.status) : null);
+const statusOf = (v: unknown) => {
+  if (!v || typeof v !== "object" || !("status" in v)) return null;
+  const category = "escalationCategory" in v ? parseEscalationCategory(v.escalationCategory) : null;
+  return category ? `${String(v.status)} (${ESCALATION_CATEGORY_LABELS[category]})` : String(v.status);
+};
 const assigneeOf = (v: unknown) =>
   v && typeof v === "object" && "assignedTo" in v ? String(v.assignedTo ?? "unassigned") : null;
 
@@ -84,6 +89,10 @@ export default async function CasePage({
                 <dd>{kase.region}</dd>
                 <dt className="text-muted-foreground">Risk score</dt>
                 <dd>{kase.riskScore}</dd>
+                <dt className="text-muted-foreground">Escalation category</dt>
+                <dd data-testid="escalation-category">
+                  {kase.escalationCategory ? ESCALATION_CATEGORY_LABELS[kase.escalationCategory] : "—"}
+                </dd>
                 <dt className="text-muted-foreground">Assigned to</dt>
                 <dd>{kase.assignedTo ?? "—"}</dd>
                 <dt className="text-muted-foreground">SLA due</dt>

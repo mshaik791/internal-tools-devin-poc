@@ -56,16 +56,41 @@ describe("transition + audit", () => {
     const kase = await prisma.kycCase.findFirstOrThrow({ where: { region: "US-WEST", status: "pending" } });
     await as(analyst);
     expect((await transitionRoute.POST(post({ to: "in_review", reason: "starting" }), params(kase.id))).status).toBe(200);
-    expect((await transitionRoute.POST(post({ to: "escalated", reason: "docs unclear" }), params(kase.id))).status).toBe(200);
+    expect((await transitionRoute.POST(post({ to: "escalated", reason: "docs unclear", escalationCategory: "identity_mismatch" }), params(kase.id))).status).toBe(200);
     expect((await transitionRoute.POST(post({ to: "approved", reason: "nope" }), params(kase.id))).status).toBe(403);
     expect((await transitionRoute.POST(post({ to: "escalated", reason: "" }), params(kase.id))).status).toBe(409);
 
     const res = await auditRoute.GET(new Request(`http://test/api/audit?caseId=${kase.id}`));
     const rows = (await res.json()) as { reason: string; before: unknown; after: unknown; actor: string; requestId: string }[];
     expect(rows.slice(0, 2)).toMatchObject([
-      { actor: "analyst", reason: "docs unclear", before: { status: "in_review" }, after: { status: "escalated" }, requestId: "test-request" },
+      {
+        actor: "analyst",
+        reason: "docs unclear",
+        before: { status: "in_review" },
+        after: { status: "escalated", escalationCategory: "identity_mismatch" },
+        requestId: "test-request",
+      },
       { actor: "analyst", reason: "starting", before: { status: "pending" }, after: { status: "in_review" } },
     ]);
+  });
+
+  it("requires a valid escalationCategory to escalate, and only then", async () => {
+    const kase = await prisma.kycCase.findFirstOrThrow({ where: { region: "US-WEST", status: "in_review" } });
+    const before = await prisma.auditLog.count({ where: { entityId: kase.id } });
+    await as(analyst);
+    const attempt = (body: object) => transitionRoute.POST(post({ reason: "why", ...body }), params(kase.id));
+    expect((await attempt({ to: "escalated" })).status).toBe(400);
+    expect((await attempt({ to: "escalated", escalationCategory: "other" })).status).toBe(400);
+    expect((await attempt({ to: "approved", escalationCategory: "fraud" })).status).toBe(400);
+    expect(await prisma.auditLog.count({ where: { entityId: kase.id } })).toBe(before);
+    expect(await prisma.kycCase.findUniqueOrThrow({ where: { id: kase.id } })).toMatchObject({ status: "in_review", escalationCategory: null });
+
+    const res = await attempt({ to: "escalated", escalationCategory: "sanctions" });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ status: "escalated", escalationCategory: "sanctions" });
+    expect(await prisma.kycCase.findUniqueOrThrow({ where: { id: kase.id } })).toMatchObject({ escalationCategory: "sanctions" });
+    const [row] = await prisma.auditLog.findMany({ where: { entityId: kase.id }, orderBy: [{ ts: "desc" }, { id: "desc" }], take: 1 });
+    expect(row).toMatchObject({ after: { status: "escalated", escalationCategory: "sanctions" }, reason: "why" });
   });
 
   it("rejects an empty reason without writing", async () => {

@@ -1,9 +1,10 @@
-import { PrismaClient, type KycStatus, type Prisma } from "../src/generated/prisma";
+import { PrismaClient, type EscalationCategory, type KycStatus, type Prisma } from "../src/generated/prisma";
 
 // 40 cases across 3 regions, 10 of the open ones overdue. Deterministic; skipped if cases exist.
 const REGIONS = ["US-WEST", "US-EAST", "EU"] as const;
 const STATUS_CYCLE: KycStatus[] = ["pending", "in_review", "pending", "escalated", "in_review", "approved", "rejected", "in_review"];
 const OPEN: KycStatus[] = ["pending", "in_review", "escalated"];
+const CATEGORIES: EscalationCategory[] = ["fraud", "sanctions", "identity_mismatch"];
 const FIRST = ["Ava", "Ben", "Chloe", "Dev", "Elif", "Farid", "Grace", "Hiro", "Ines", "Jonas"];
 const LAST = ["Nguyen", "Okafor", "Silva", "Kowalski", "Haddad", "Larsen", "Moreau", "Tanaka"];
 const HOUR = 3_600_000;
@@ -41,6 +42,7 @@ export function buildCases(now = new Date(), count = 40, overdueTarget = 10): Pr
       riskScore: Math.floor(rand() * 101),
       status,
       assignedTo: status === "escalated" ? "senior" : region === "US-WEST" && status !== "pending" ? "analyst" : null,
+      escalationCategory: status === "escalated" ? CATEGORIES[i % CATEGORIES.length]! : null,
       slaDueAt,
       createdAt,
     };
