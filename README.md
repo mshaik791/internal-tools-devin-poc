@@ -17,22 +17,21 @@ I spent an evening finding out. This repo is what came out of it. My take, in on
 
 ## Running it
 
-Docker, Node 22 (20 works, you get a warning), pnpm 9.
+You need Docker (running), Node 22 (20 works, you get a warning), and pnpm 9. If `corepack enable` gives you trouble, `npm i -g pnpm@9` works.
 
-If you have Postgres running locally on 5432, stop it. I didn't, and the first migrations went into Homebrew's Postgres instead of the container. Took me a few minutes to figure out.
-
-On Colima, clone somewhere under your home directory; Docker can’t bind-mount paths outside it.
-
+Two things that bit me:
+- If you have Postgres running locally on 5432, stop it. Mine was Homebrew's, and the first migrations went into it instead of the container.
+- On Colima, clone somewhere under your home directory. Docker can't bind-mount paths outside it.
 
 ```
 cp .env.example .env
 pnpm install
-pnpm dev     # postgres up, migrate, seed, serve
+pnpm dev     # postgres up, migrate, seed, serve all three apps
 pnpm test    # 426 unit tests
 ```
 
-KYC queue is on http://localhost:3001. Users: Ana Analyst (US-WEST only), Sam Senior (sees everything, resolves escalations), Ada Admin.
-Feature flags is on http://localhost:3002. Users: engineer (staging only), admin (staging and prod), viewer.
+KYC queue: http://localhost:3001 — sign in as Ana Analyst (US-WEST only), Sam Senior (sees everything, resolves escalations), or Ada Admin.
+Feature flags: http://localhost:3002 — sign in as engineer (staging only), admin (staging and prod), or viewer.
 
 Worth doing: log in as Ana, open an in_review case, escalate it. You'll have to pick a category. Log in as Sam, approve it. Look at the audit tab. Then:
 
