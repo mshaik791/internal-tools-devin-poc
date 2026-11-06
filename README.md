@@ -26,4 +26,4 @@ Sign in at `/login` as one of the mock users: `analyst` (US-WEST), `senior` (sen
 ## Database roles
 
 - Migrations run as the owner (`MIGRATE_DATABASE_URL`).
-- Apps run as `app_rw` (`DATABASE_URL`). The core migration grants it `SELECT, INSERT` on `audit_log` only — no `UPDATE`, `DELETE` or `TRUNCATE`. The dev login password for `app_rw` is set by `docker/postgres-init.sh` on first DB start.
+- Apps run as `app_rw` (`DATABASE_URL`). The core migration grants it `SELECT, INSERT` on `audit_log` only — no `UPDATE`, `DELETE` or `TRUNCATE`. Dev DB passwords live in the root `.env.example` (copied to `.env` by `pnpm dev`); `docker/postgres-init.sh` sets the `app_rw` login on first DB start.

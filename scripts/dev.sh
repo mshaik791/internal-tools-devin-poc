@@ -3,6 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+[ -f .env ] || cp .env.example .env
 docker compose up -d --wait
 
 for app in apps/*/; do

@@ -8,17 +8,6 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 2s
-          --health-timeout 3s
-          --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -29,12 +18,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
-      - name: Provision app_rw login (dev password; mirrors docker/postgres-init.sh)
-        run: psql -v ON_ERROR_STOP=1 -c "CREATE ROLE app_rw LOGIN PASSWORD 'app_rw_dev'"
-        env:
-          PGHOST: localhost
-          PGUSER: postgres
-          PGPASSWORD: postgres
+      - name: Start Postgres (docker-compose.yml; passwords from .env.example, app_rw via docker/postgres-init.sh)
+        run: cp .env.example .env && docker compose up -d --wait
       - name: Migrate + seed
         run: |
           for app in apps/*/; do [ -f "$app/prisma/schema.prisma" ] && cp "$app/.env.example" "$app/.env"; done

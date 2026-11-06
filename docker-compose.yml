@@ -3,10 +3,10 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?copy .env.example to .env}
       # Login password for the runtime role `app_rw`. The role's privileges are
-      # granted by each app's Prisma migration; only the dev password is set here.
-      APP_RW_PASSWORD: ${APP_RW_PASSWORD:-app_rw_dev}
+      # granted by each app's Prisma migration.
+      APP_RW_PASSWORD: ${APP_RW_PASSWORD:?copy .env.example to .env}
     ports:
       - "5432:5432"
     volumes:

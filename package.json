@@ -11,7 +11,7 @@
     "test:db": "pnpm -r --if-present test:db",
     "test:e2e": "pnpm -r --if-present test:e2e",
     "typecheck": "pnpm -r --if-present typecheck",
-    "db:up": "docker compose up -d --wait"
+    "db:up": "test -f .env || cp .env.example .env; docker compose up -d --wait"
   },
   "devDependencies": {
     "typescript": "5.9.3"
