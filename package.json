@@ -1,0 +1,19 @@
+{
+  "name": "internal-tools",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "test": "pnpm -r --if-present test",
+    "test:db": "pnpm -r --if-present test:db",
+    "test:e2e": "pnpm -r --if-present test:e2e",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:up": "test -f .env || cp .env.example .env; docker compose up -d --wait"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

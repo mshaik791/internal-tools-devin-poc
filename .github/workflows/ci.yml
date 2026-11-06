@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Start Postgres (docker-compose.yml; passwords from .env.example, app_rw via docker/postgres-init.sh)
+        run: cp .env.example .env && docker compose up -d --wait
+      - name: Migrate + seed
+        run: |
+          for app in apps/*/; do [ -f "$app/prisma/schema.prisma" ] && cp "$app/.env.example" "$app/.env"; done
+          pnpm -r --filter "./apps/**" run db:setup
+      - run: pnpm test:db

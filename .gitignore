@@ -150,3 +150,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Prisma generated clients (per app)
+**/src/generated/
+# Playwright
+test-results/
+playwright-report/

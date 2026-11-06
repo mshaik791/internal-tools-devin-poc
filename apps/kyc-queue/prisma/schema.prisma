@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("MIGRATE_DATABASE_URL")
+}
+
+/// Append-only. Written only through @internal/core audit(); app_rw has SELECT + INSERT, no UPDATE/DELETE.
+model AuditLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ts        DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  actor     String
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  before    Json?
+  after     Json?
+  reason    String?
+  requestId String   @map("request_id")
+
+  @@index([entity, entityId, ts(sort: Desc)])
+  @@map("audit_log")
+}
+
+enum KycStatus {
+  pending
+  in_review
+  approved
+  rejected
+  escalated
+}
+
+model KycCase {
+  id            String    @id @default(cuid())
+  customerName  String    @map("customer_name")
+  customerEmail String    @map("customer_email")
+  region        String
+  /// 0-100, enforced by a CHECK constraint in the migration
+  riskScore     Int       @map("risk_score")
+  status        KycStatus @default(pending)
+  /// User `sub` from the identity provider
+  assignedTo    String?   @map("assigned_to")
+  slaDueAt      DateTime  @map("sla_due_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([region, status])
+  @@index([slaDueAt])
+  @@map("kyc_case")
+}
