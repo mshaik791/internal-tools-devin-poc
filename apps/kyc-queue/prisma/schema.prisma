@@ -34,6 +34,15 @@ enum KycStatus {
   escalated
 }
 
+/// Why a case was escalated. Required by the API when transitioning to `escalated`.
+enum EscalationCategory {
+  fraud
+  sanctions
+  identity_mismatch
+
+  @@map("escalation_category")
+}
+
 model KycCase {
   id            String    @id @default(cuid())
   customerName  String    @map("customer_name")
@@ -44,6 +53,8 @@ model KycCase {
   status        KycStatus @default(pending)
   /// User `sub` from the identity provider
   assignedTo    String?   @map("assigned_to")
+  /// Set when the case is escalated; kept after the escalation is resolved
+  escalationCategory EscalationCategory? @map("escalation_category")
   slaDueAt      DateTime  @map("sla_due_at") @db.Timestamptz(6)
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
