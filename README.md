@@ -2,6 +2,8 @@
 
 Context: a fintech with ~60 engineers spends about $250K/yr on Power Apps for three internal tools (KYC review queue, refunds dashboard, feature flag admin) and has ten more planned. The VP of Eng wants to know if the team can build these with Devin instead and drop the license.
 
+Loom: https://www.loom.com/share/2866da8d887346ef904ba05a80a3f71e
+
 I spent an evening finding out. This repo is what came out of it. My take, in one line: Devin can build and maintain the apps, it can't replace the stuff Power Apps does underneath them (login, hosting, audit evidence, someone on call), so build the new tools this way on a small foundation that a human owns, leave the existing three alone until renewal, and run a 4-week pilot before deciding anything bigger. Details in the Loom and in `economics.md`.
 
 ## What's here
