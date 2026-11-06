@@ -14,8 +14,10 @@ Requires Node 22, pnpm 9 (`corepack enable`), Docker.
 
 ```bash
 pnpm install
-pnpm dev        # postgres up -> prisma migrate deploy -> seed -> all apps (template :3000)
-pnpm test       # vitest (no DB needed)
+pnpm dev        # postgres up -> prisma migrate deploy -> seed -> all apps (template :3000, kyc-queue :3001)
+pnpm test       # vitest unit tests (no DB needed)
+pnpm test:db    # vitest integration tests against the dev DB (run after `pnpm dev`)
+pnpm test:e2e   # Playwright smoke tests (resets app DBs; `pnpm --filter @internal/kyc-queue exec playwright install chromium` once)
 pnpm typecheck
 ```
 
