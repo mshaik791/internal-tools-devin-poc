@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { getAuthAdapter } from "./adapter";
 import { SESSION_COOKIE, SESSION_TTL_SECONDS, signSession, verifySession } from "./session-token";
-import type { Session } from "./types";
+import type { AuthAdapter, Session } from "./types";
 
 /** Current user from the signed session cookie, or null. For server components, route handlers and actions. */
 export async function getSession(): Promise<Session | null> {
@@ -10,9 +10,12 @@ export async function getSession(): Promise<Session | null> {
   return verifySession(jar.get(SESSION_COOKIE)?.value);
 }
 
-/** Sets the session cookie for `sub`. Call from a server action or route handler. */
-export async function signIn(sub: string): Promise<Session> {
-  const user = await getAuthAdapter().getUser(sub);
+/**
+ * Sets the session cookie for `sub`. Call from a server action or route handler.
+ * Pass the app's adapter (e.g. `getAuthAdapter({ users })`) if it supplies its own users.
+ */
+export async function signIn(sub: string, adapter: AuthAdapter = getAuthAdapter()): Promise<Session> {
+  const user = await adapter.getUser(sub);
   if (!user) throw new Error("Unknown user");
   const jar = await cookies();
   jar.set(SESSION_COOKIE, await signSession(user), {

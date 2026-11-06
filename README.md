@@ -21,7 +21,7 @@ pnpm test:e2e   # Playwright smoke tests (resets app DBs; `pnpm --filter @intern
 pnpm typecheck
 ```
 
-Sign in at `/login` as one of the mock users: `analyst` (US-WEST), `senior` (senior_reviewer, all regions), `admin`.
+Sign in at `/login` as one of the mock users: `analyst` (US-WEST), `senior` (senior_reviewer, all regions), `admin`. Apps can supply their own mock users with `getAuthAdapter({ users })` / `createMockAuth({ users })` and `signIn(sub, adapter)`; without `users` the three above are used.
 
 ## Database roles
 
