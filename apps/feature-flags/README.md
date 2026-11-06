@@ -16,7 +16,7 @@ pnpm --filter @internal/feature-flags test:e2e # resets + reseeds the feature_fl
 pnpm --filter @internal/feature-flags db:reset # drop, migrate, reseed
 ```
 
-Sign in as `admin` (toggles staging and prod). **Core gap:** core's mock OIDC only seeds analyst / senior_reviewer / admin, so `engineer` and `viewer` can't sign in yet. Their rules are covered by unit and DB tests that use signed test sessions. Core users (analyst, senior) get 403 here.
+Sign in at `/login` as `engineer` (toggles staging), `admin` (staging + prod) or `viewer` (read only). These mock users are declared in `src/auth.ts` and passed to core with `getAuthAdapter({ users })`.
 
 ## Where things live
 
@@ -26,6 +26,7 @@ Sign in as `admin` (toggles staging and prod). **Core gap:** core's mock OIDC on
 | States, transitions, roles per env | `src/flags/machine.ts` (`transitionsFor()` drives the inline toggle and detail buttons) |
 | Transition + `audit()` in one DB transaction | `src/flags/flags.ts` |
 | API | `GET /api/flags/:id`, `POST /api/flags/:id/transition {to, reason, percentage?}`, `GET /api/audit?flagId=` |
+| Mock OIDC users | `src/auth.ts` |
 | Seed (12 flags = 6 keys × staging/prod, skipped if data exists) | `prisma/seed.ts` |
 
 Status codes: 401 no session, 403 role not permitted (or a prod toggle by a non-admin), 404 unknown flag, 400 empty reason or bad percentage, 409 undeclared transition or concurrent change.

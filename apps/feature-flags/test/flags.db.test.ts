@@ -8,17 +8,17 @@ vi.mock("next/headers", () => ({
 }));
 
 const { prisma } = await import("@/lib/db");
+const { USERS } = await import("@/auth");
 const auditRoute = await import("@/app/api/audit/route");
 const flagRoute = await import("@/app/api/flags/[id]/route");
 const transitionRoute = await import("@/app/api/flags/[id]/transition/route");
 
-// Core's mock OIDC only seeds analyst / senior_reviewer / admin. Engineer and viewer are
-// test-only signed sessions until core adds those users (see PR description).
-const admin = MOCK_USERS.find((u) => u.role === "admin")!;
-const analyst = MOCK_USERS.find((u) => u.role === "analyst")!;
-const user = (role: string): Session => ({ sub: `test-${role}`, name: role, email: `${role}@example.test`, role, regions: ["*"] });
+const user = (role: string) => USERS.find((u) => u.role === role)!;
 const engineer = user("engineer");
+const admin = user("admin");
 const viewer = user("viewer");
+// Not one of this app's users; a signed session for a role outside the spec must still be denied.
+const analyst = MOCK_USERS.find((u) => u.role === "analyst")!;
 
 const as = async (u: Session) => {
   cookie = await signSession(u);
@@ -49,8 +49,8 @@ describe("env-scoped toggles", () => {
     expect((await toggle(staging, { to: "on", reason: "full rollout" })).status).toBe(200);
     const rows = await (await auditRoute.GET(new Request(`http://test/api/audit?flagId=${staging}`))).json();
     expect(rows).toMatchObject([
-      { actor: "test-engineer", reason: "full rollout", before: { state: "percentage", percentage: 25 }, after: { state: "on", percentage: null }, requestId: "test-request" },
-      { actor: "test-engineer", reason: "canary", before: { state: "off", percentage: null }, after: { state: "percentage", percentage: 25 } },
+      { actor: "engineer", reason: "full rollout", before: { state: "percentage", percentage: 25 }, after: { state: "on", percentage: null }, requestId: "test-request" },
+      { actor: "engineer", reason: "canary", before: { state: "off", percentage: null }, after: { state: "percentage", percentage: 25 } },
     ]);
   });
 
