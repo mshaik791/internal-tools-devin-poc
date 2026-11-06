@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("MIGRATE_DATABASE_URL")
+}
+
+/// Append-only. Written only through @internal/core audit(); app_rw has SELECT + INSERT, no UPDATE/DELETE.
+model AuditLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ts        DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  actor     String
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  before    Json?
+  after     Json?
+  reason    String?
+  requestId String   @map("request_id")
+
+  @@index([entity, entityId, ts(sort: Desc)])
+  @@map("audit_log")
+}
+
+enum FlagEnv {
+  staging
+  prod
+}
+
+enum FlagState {
+  off
+  on
+  percentage
+}
+
+/// One row per (key, env). Lifecycle via src/flags/machine.ts; every change is audited.
+model Flag {
+  id          String    @id @default(cuid())
+  key         String
+  description String
+  env         FlagEnv
+  state       FlagState @default(off)
+  /// 1-99, set only when state = percentage (CHECK constraints in the migration)
+  percentage  Int?
+  /// Owning team handle
+  owner       String
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([key, env])
+  @@index([env, key])
+  @@map("flag")
+}
