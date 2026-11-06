@@ -21,6 +21,9 @@ Docker, Node 22 (20 works, you get a warning), pnpm 9.
 
 If you have Postgres running locally on 5432, stop it. I didn't, and the first migrations went into Homebrew's Postgres instead of the container. Took me a few minutes to figure out.
 
+On Colima, clone somewhere under your home directory; Docker can’t bind-mount paths outside it.
+
+
 ```
 cp .env.example .env
 pnpm install
