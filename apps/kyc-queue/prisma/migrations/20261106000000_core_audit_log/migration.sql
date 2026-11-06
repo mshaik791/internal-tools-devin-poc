@@ -24,7 +24,12 @@ CREATE INDEX "audit_log_entity_entity_id_ts_idx" ON "audit_log"("entity", "entit
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_rw') THEN
-    CREATE ROLE app_rw NOLOGIN;
+    BEGIN
+      CREATE ROLE app_rw NOLOGIN;
+    EXCEPTION WHEN duplicate_object OR unique_violation THEN
+      -- another migration created it concurrently; fine
+      NULL;
+    END;
   END IF;
 END
 $$;
